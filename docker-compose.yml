@@ -48,7 +48,7 @@ services:
       - user-network
   
   elasticsearch:
-    image: elasticsearch:latest
+    image: elasticsearch:9.0.4
     ports:
       - 9200:9200
     environment:

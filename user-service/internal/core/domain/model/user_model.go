@@ -11,7 +11,7 @@ type User struct {
 	Photo      string
 	Address    string
 	Lat        float64
-	Lon        float64
+	Lng        float64
 	IsVerified bool
 	CreatedAt  time.Time
 	UpdatedAt  time.Time

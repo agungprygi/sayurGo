@@ -1,0 +1,39 @@
+package service
+
+import (
+	"context"
+	"errors"
+
+	"user-service/internal/adapter/repository"
+	"user-service/internal/core/domain/entity"
+	"user-service/utils/conv"
+
+	"github.com/labstack/gommon/log"
+)
+
+type UserServiceInterface interface {
+	SignIn(ctx context.Context, req entity.UserEntity) (*entity.UserEntity, string, error)
+}
+
+type userService struct {
+	userRepo repository.UserRepositoryInterface
+}
+
+func NewUserService(userRepo repository.UserRepositoryInterface) UserServiceInterface {
+	return &userService{userRepo: userRepo}
+}
+
+func (u *userService) SignIn(ctx context.Context, req entity.UserEntity) (*entity.UserEntity, string, error) {
+	user, err := u.userRepo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		log.Errorf("[UserService-1] SignIn: %v", err)
+		return nil, "", err
+	}
+	if checkPass := conv.CheckPasswordHash(req.Password, user.Password); !checkPass {
+		err := errors.New("invalid password")
+		log.Errorf("[UserService-2] SignIn: %v", err)
+		return nil, "", err
+	}
+
+	return user, "", nil
+}
