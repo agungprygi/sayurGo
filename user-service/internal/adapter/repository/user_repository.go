@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"user-service/internal/core/domain/entity"
 	"user-service/internal/core/domain/model"
@@ -21,9 +22,14 @@ type userRepository struct {
 func (u *userRepository) GetUserByEmail(ctx context.Context, email string) (*entity.UserEntity, error) {
 	modelUser := model.User{}
 
-	if err := u.db.Where("email = ? && is_verified = ?", email, true).
+	if err := u.db.Where("email = ? AND is_verified = ?", email, true).
 		Preload("Roles").
 		First(&modelUser).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = errors.New("404")
+			log.Infof("[UserRepository-2] GetUserByEmail: User not found")
+			return nil, err
+		}
 		log.Errorf("[UserRepository-1] GetUserByEmail: %v", err)
 		return nil, err
 	}

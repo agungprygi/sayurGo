@@ -30,7 +30,9 @@ func SeedAdmin(db *gorm.DB) {
 	if err := db.FirstOrCreate(&admin, model.User{Email: "superadmin@mail.com"}).Error; err != nil {
 		log.Fatalf("%s: %v", err.Error(), err)
 	} else {
-		db.Model(&admin).Association("Roles").Append(modelRole)
+		if err := db.Model(&admin).Association("Roles").Append(&modelRole); err != nil {
+			log.Fatalf("%s: %v", err.Error(), err)
+		}
 		log.Printf("Admin created successfully")
 	}
 }

@@ -40,7 +40,7 @@ func NewConfig() (*Config, error) {
 			Port:      viper.GetString("DATABASE_PORT"),
 			User:      viper.GetString("DATABASE_USER"),
 			Password:  viper.GetString("DATABASE_PASSWORD"),
-			DBName:    viper.GetString("DB_NAME"),
+			DBName:    viper.GetString("DATABASE_NAME"),
 			DBMaxOpen: viper.GetInt("DATABASE_MAX_OPEN_CONNECTION"),
 			DBMaxIdle: viper.GetInt("DATABASE_MAX_IDLE_CONNECTION"),
 		},
