@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
+	"user-service/config"
 	"user-service/internal/adapter/repository"
 	"user-service/internal/core/domain/entity"
 	"user-service/utils/conv"
@@ -16,11 +18,17 @@ type UserServiceInterface interface {
 }
 
 type userService struct {
-	userRepo repository.UserRepositoryInterface
+	userRepo   repository.UserRepositoryInterface
+	cfg        *config.Config
+	jwtService JwtServiceInterface
 }
 
-func NewUserService(userRepo repository.UserRepositoryInterface) UserServiceInterface {
-	return &userService{userRepo: userRepo}
+func NewUserService(userRepo repository.UserRepositoryInterface, cfg *config.Config, jwtService JwtServiceInterface) UserServiceInterface {
+	return &userService{
+		userRepo:   userRepo,
+		cfg:        cfg,
+		jwtService: jwtService,
+	}
 }
 
 func (u *userService) SignIn(ctx context.Context, req entity.UserEntity) (*entity.UserEntity, string, error) {
@@ -35,5 +43,27 @@ func (u *userService) SignIn(ctx context.Context, req entity.UserEntity) (*entit
 		return nil, "", err
 	}
 
-	return user, "", nil
+	token, err := u.jwtService.GenerateToken(user.ID)
+	if err != nil {
+		log.Errorf("[UserService-3] SignIn: %v", err)
+		return nil, "", err
+	}
+
+	sessionData := map[string]interface{}{
+		"token":      token,
+		"user_id":    user.ID,
+		"name":       user.Name,
+		"email":      user.Email,
+		"logged_in":  true,
+		"created_at": time.Now().String(),
+	}
+
+	redisCoon := config.NewRedisClient(u.cfg)
+	err = redisCoon.HSet(ctx, user.Email, sessionData).Err()
+	if err != nil {
+		log.Errorf("[UserService-4] SignIn: %v", err)
+		return nil, "", err
+	}
+
+	return user, token, nil
 }

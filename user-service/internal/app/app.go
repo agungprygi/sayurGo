@@ -30,7 +30,8 @@ func RunServer() {
 	}
 
 	userRepo := repository.NewUserRepository(db.DB)
-	userService := service.NewUserService(userRepo)
+	jwtService := service.NewJwtService(cfg)
+	userService := service.NewUserService(userRepo, cfg, jwtService)
 
 	e := echo.New()
 
@@ -49,7 +50,7 @@ func RunServer() {
 		return c.JSON(http.StatusOK, map[string]string{"message": "OK"})
 	})
 
-	handler.NewUserHandler(e, userService)
+	handler.NewUserHandler(e, userService, cfg)
 
 	go func() {
 		if cfg.App.AppPort == "" {
